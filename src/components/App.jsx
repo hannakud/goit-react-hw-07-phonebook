@@ -2,13 +2,26 @@ import css from './App.module.css';
 import { ContactForm } from './ContactForm/ContactForm';
 import { Filter } from './Filter/Filter';
 import { ContactList } from './ContactList/ContactList';
-import { useSelector } from 'react-redux';
-import { getFilteredContacts } from 'redux/contactsSlice';
-import { getFilter } from 'redux/filterSlice';
+import { useDispatch } from 'react-redux';
+import { useEffect } from 'react';
+import { fetchContacts } from 'redux/operations';
+import { Loader } from './Loader/Loader';
+import { ToastContainer, toast } from 'react-toastify';
+import { useError, useFilter, useFilteredContacts, useIsLoading } from 'hooks';
 
 export const App = () => {
-  const filteredContactsList = useSelector(getFilteredContacts);
-  const filter = useSelector(getFilter);
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchContacts());
+  }, [dispatch]);
+  const filteredContactsList = useFilteredContacts();
+  const filter = useFilter();
+  const isLoading = useIsLoading();
+  const error = useError();
+
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
   const emptyMessage = filter
     ? `No contacts macth "${filter}"`
@@ -20,11 +33,13 @@ export const App = () => {
       <ContactForm />
       <h2>Contacts</h2>
       <Filter />
+      {isLoading && !error && <Loader />}
       {filteredContactsList.length ? (
         <ContactList />
       ) : (
         <div className={css.message}>{emptyMessage}</div>
       )}
+      <ToastContainer />
     </main>
   );
 };
